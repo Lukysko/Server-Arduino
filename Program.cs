@@ -8,7 +8,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 
-namespace InfluxDBTest3
+namespace Server
 {
     public class Program
     {
@@ -19,7 +19,8 @@ namespace InfluxDBTest3
 
         public static IWebHost BuildWebHost(string[] args) =>
             WebHost.CreateDefaultBuilder(args)
-                .UseUrls("http://*:90")
+                .UseUrls("http://localhost:90")
+                //.UseUrls("http://*:90")
                 .UseStartup<Startup>()
                 .Build();
     }

@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using AdysTech.InfluxDB.Client.Net;
 
-namespace InfluxDBTest3.Controllers
+namespace Server.Controllers
 {
     [Route("api/[controller]")]
     public class ValuesController : Controller
