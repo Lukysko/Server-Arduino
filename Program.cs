@@ -19,8 +19,7 @@ namespace Server
 
         public static IWebHost BuildWebHost(string[] args) =>
             WebHost.CreateDefaultBuilder(args)
-                .UseUrls("http://localhost:90")
-                //.UseUrls("http://*:90")
+                .UseUrls("http://*:90")
                 .UseStartup<Startup>()
                 .Build();
     }

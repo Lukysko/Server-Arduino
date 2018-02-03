@@ -4,107 +4,175 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using AdysTech.InfluxDB.Client.Net;
+using System.Net;
+using System.Net.NetworkInformation;
+using Newtonsoft.Json.Linq;
+using System.IO;
+using Newtonsoft.Json;
+using System.Reflection;
 
 namespace Server.Controllers
-{
+{ 
     [Route("api/[controller]")]
-    public class ValuesController : Controller
+    // Controler for living room
+    public class LivingRooomController : Controller
     {
-        // http://192.168.1.6:90/api/values?tempFromSenzor=20 - example
-        [HttpGet]
+        // http://localhost:90/api/livingrooom?tempFromSenzor=20 - example of Get
 
-        //public async Task<string> Get(double tempFromSenzor)
+        [HttpGet]
         public string Get(double tempFromSenzor)
         {
-            /* 
-            var TemperatureController = new Temperature();
-            
-            TemperatureController.CreateConnection().Wait();
-            Console.Write("Connection done \n");
-            
-            TemperatureController.SendTempToDatabase(tempFromSenzor).Wait();
-            Console.Write("Temp send \n");
-            
-            var tempFromUser = TemperatureController.GetTempFromDatabase().Result;
-            Console.Write("Temp read" + tempFromUser + " \n");
-            
-            return tempFromUser.ToString();
-            */
+            var connection = InternetConnection.CheckConnection();
+            JsonFile fileSettings = new JsonFile();
+            if (connection) {
+                InfluxDBCreator influxDBCreator = new InfluxDBCreator();
 
-            InfluxDBClient client;
-            List<String> dbNames;
-            client = new InfluxDBClient("http://52.26.99.159:8086", "", "");
-            dbNames = client.GetInfluxDBNamesAsync().Result;
-            Console.Write("Connection done");
-            Console.Write(dbNames[0]);
-            Console.Write(dbNames[1]);
-            Console.Write(dbNames[3]);
+                // prerobit na vracanie pola s hodnotami
+                string tempFromUSer = influxDBCreator.ReadFromDatabase();
 
-             var valMixed = new InfluxDatapoint<InfluxValueField>();
-             valMixed.UtcTimestamp = DateTime.UtcNow;
-             valMixed.Fields.Add("actual", new InfluxValueField(tempFromSenzor));
+                // Write to JSON settings from user
+                fileSettings.WriteData(tempFromUSer);
 
-             var queryResultSet = client.QueryMultiSeriesAsync(dbNames[3], "select * from temperature").Result;
-             var numberOfRecordsResult = queryResultSet[0].Entries.Count;
-             var setValueFromUserResult = queryResultSet.Last()?.Entries[numberOfRecordsResult-1].Setpoint;
-             Console.Write(setValueFromUserResult);
-             valMixed.Fields.Add("setpoint", new InfluxValueField(Convert.ToDouble(setValueFromUserResult)));
+                // Write to database temp from senzor and generate values
+                // Generate data - kazda izba vlastna funkcia
+                influxDBCreator.WriteToDatabase(tempFromSenzor);
+                fileSettings.ReadData();
+                return tempFromUSer;
 
-             valMixed.MeasurementName = "temperature";
-             valMixed.Precision = TimePrecision.Seconds;
-                
-             var r =  client.PostPointAsync(dbNames[1], valMixed).Result;
-             Console.Write("Send OK");
-
-            var queryResult = client.QueryMultiSeriesAsync(dbNames[1], "select * from temperature").Result;
-            Console.Write(queryResult);
-            var numberOfRecords = queryResult[0].Entries.Count;
-            Console.Write(numberOfRecords);
-            var setValueFromUser = queryResult.Last()?.Entries[numberOfRecords-1].Setpoint;
-            Console.Write("teeeeeeeeeeeeest");
-            Console.Write(setValueFromUser.ToString());
-
-            return setValueFromUser;
-        }
-        
-    }
-
-    
-    public class Temperature
-    {
-        InfluxDBClient client;
-        List<String> dbNames;
-
-        public async Task CreateConnection(){
-            client = new InfluxDBClient("http://52.26.99.159:8086", "", "");
-            dbNames = await client.GetInfluxDBNamesAsync();
-            Console.Write("Connection done");
-            Console.Write(dbNames[0]);
-            Console.Write(dbNames[1]);
+            } else {
+                fileSettings.ReadData();
+                return "5";
+            }
         }
 
-        public async Task SendTempToDatabase(double temp)
+        public class InfluxDBCreator {
+            // variable
+            private InfluxDBClient client;
+            private List<String> databaseNames;
+
+            public InfluxDBCreator() {
+                // connection
+                client = new InfluxDBClient("http://52.26.99.159:8086", "", "");
+                databaseNames = client.GetInfluxDBNamesAsync().Result;
+                Console.Write("Connection done \n");
+                Console.Write("Database: \n");
+
+
+                // testovaci vypis
+                Console.Write(databaseNames[0] + "\n");
+                Console.Write(databaseNames[1] + "\n");
+                Console.Write(databaseNames[3] + "\n");
+            }
+
+            public string ReadFromDatabase() {
+                // prerobit cez nove tablku
+                /*
+                var queryResultSet = client.QueryMultiSeriesAsync(databaseNames[3], "select * from temperature").Result;
+                var numberOfRecordsResult = queryResultSet[0].Entries.Count;
+                var setValueFromUserResult = queryResultSet.Last()?.Entries[numberOfRecordsResult-1].Setpoint;
+                Console.Write(setValueFromUserResult);
+                valMixed.Fields.Add("setpoint", new InfluxValueField(Convert.ToDouble(setValueFromUserResult)));
+                var queryResult = client.QueryMultiSeriesAsync(databaseNames[1], "select * from temperature").Result;
+                Console.Write(queryResult);
+                var numberOfRecords = queryResult[0].Entries.Count;
+                Console.Write(numberOfRecords);
+                var setValueFromUser = queryResult.Last()?.Entries[numberOfRecords-1].Setpoint;
+                Console.Write("teeeeeeeeeeeeest");
+                Console.Write(setValueFromUser.ToString());
+                */
+
+                int Out = 25;
+                return Out.ToString();
+            }
+
+            public void WriteToDatabase(double tempFromSenzor) {
+
+                // prepare writing of temperature from senzor to InfluxDB
+                var valMixed = new InfluxDatapoint<InfluxValueField>();
+                valMixed.UtcTimestamp = DateTime.UtcNow;
+                valMixed.Fields.Add("actual", new InfluxValueField(tempFromSenzor));
+                // posta data
+                valMixed.MeasurementName = "temperature";
+                valMixed.Precision = TimePrecision.Seconds;
+
+                var sendResponse = client.PostPointAsync(databaseNames[1], valMixed).Result;
+                if (sendResponse)
+                {
+                    Console.Write("Send OK");
+                }
+                else
+                {
+                    Console.Write("Database problem");
+                }
+            }
+
+
+        }
+
+        public class InternetConnection {
+            public static bool CheckConnection() {
+                Ping ping = new Ping();
+                PingReply pingStatus =
+                    ping.Send(IPAddress.Parse("208.69.34.231"), 1000);
+
+                if (pingStatus.Status == IPStatus.Success)
+                {
+                    Console.Write("Internet connection istablished");
+                    return true;
+                }
+                else
+                {
+                    Console.Write("Internet connection not istablished");
+                    return false;
+                }
+            }
+        }
+
+        public class GenerateData {
+
+        }
+
+        public class JsonFile {
+
+            private string[] drives;
+            private string pathOfSettings;
+
+            public JsonFile() {
+                drives = System.IO.Directory.GetLogicalDrives();
+                Console.Write(drives[0] + "\n");
+                Directory.CreateDirectory(drives[0] + "\\Settings");
+                pathOfSettings = drives[0] + "\\Settings" + "\\Settings.json";
+            }
+             
+            // write data from user to JSON
+            public void WriteData(string temperature) {
+
+                // create JSON object
+                dynamic livingRooom = new JObject();
+                livingRooom.Temperature = temperature;
+
+                // Write Json object to file
+                System.IO.File.WriteAllText(pathOfSettings, livingRooom.ToString());
+
+            }
+            public void ReadData()
+            {
+                ItemInSettings item;
+                using (StreamReader r = new StreamReader(pathOfSettings))
+                {
+                    string json = r.ReadToEnd();
+                    item = Newtonsoft.Json.JsonConvert.DeserializeObject<ItemInSettings>(json);
+                }
+                Console.Write(item.Temperature.ToString());
+            }
+
+        }
+
+        public class ItemInSettings
         {
-             var valMixed = new InfluxDatapoint<InfluxValueField>();
-             valMixed.UtcTimestamp = DateTime.UtcNow;
-             valMixed.Fields.Add("actual", new InfluxValueField(temp));
-             valMixed.Fields.Add("setpoint", new InfluxValueField(10.0));
-
-             valMixed.MeasurementName = "temperature";
-             valMixed.Precision = TimePrecision.Seconds;
-                
-             var r = await client.PostPointAsync(dbNames[1], valMixed);
-             Console.Write("Send OK");
+            public int Temperature;
+            // TO-DO ostatne parametere - huminidity ..
         }
 
-        public async Task<string> GetTempFromDatabase()
-        {
-            var queryResult = await client.QueryMultiSeriesAsync(dbNames[1], "select * from temperature limit 10");
-            var numberOfRecords = queryResult[0].Entries.Count;
-            var setValueFromUser = queryResult.Last()?.Entries[numberOfRecords-1].Setpoint;
-            Console.Write(setValueFromUser);
-
-            return setValueFromUser;
-        }
     }
 }
