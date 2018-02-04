@@ -19,6 +19,7 @@ namespace Server
 
         public static IWebHost BuildWebHost(string[] args) =>
             WebHost.CreateDefaultBuilder(args)
+                // add  stable IP
                 .UseUrls("http://*:90")
                 .UseStartup<Startup>()
                 .Build();

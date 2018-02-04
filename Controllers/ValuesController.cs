@@ -52,7 +52,7 @@ namespace Server.Controllers
 
             public InfluxDBCreator() {
                 // connection
-                client = new InfluxDBClient("http://52.26.99.159:8086", "", "");
+                client = new InfluxDBClient("http://18.221.12.219:8086", "", "");
                 databaseNames = client.GetInfluxDBNamesAsync().Result;
                 Console.Write("Connection done \n");
                 Console.Write("Database: \n");
@@ -61,7 +61,7 @@ namespace Server.Controllers
                 // testovaci vypis
                 Console.Write(databaseNames[0] + "\n");
                 Console.Write(databaseNames[1] + "\n");
-                Console.Write(databaseNames[3] + "\n");
+                Console.Write(databaseNames[2] + "\n");
             }
 
             public string ReadFromDatabase() {
