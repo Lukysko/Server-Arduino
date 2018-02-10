@@ -17,36 +17,37 @@ namespace Server.Controllers
     // Controler for living room
     public class LivingRooomController : Controller
     {
-        // http://localhost:90/api/livingrooom?tempFromSenzor=20 - example of Get
+        // http://localhost:90/api/livingrooom?tempFromSenzor=20 - example of get
 
         [HttpGet]
         public string Get(double tempFromSenzor)
         {
             var connection = InternetConnection.CheckConnection();
-            JsonFile fileSettings = new JsonFile();
+            SettingsFile fileSettings = new SettingsFile();
+
             if (connection) {
                 InfluxDBCreator influxDBCreator = new InfluxDBCreator();
-
-                // prerobit na vracanie pola s hodnotami
-                string tempFromUSer = influxDBCreator.ReadFromDatabase();
+                ItemInSettings databaseValuesUser = influxDBCreator.ReadFromDatabase();
 
                 // Write to JSON settings from user
-                fileSettings.WriteData(tempFromUSer);
+                fileSettings.WriteData(databaseValuesUser.Temperature, databaseValuesUser.Light, databaseValuesUser.Blinds);
 
                 // Write to database temp from senzor and generate values
                 // Generate data - kazda izba vlastna funkcia
                 influxDBCreator.WriteToDatabase(tempFromSenzor);
-                fileSettings.ReadData();
-                return tempFromUSer;
+
+                return databaseValuesUser.Temperature;
+                // return temp + if internet is working -> "25+0" or "25+1"
 
             } else {
-                fileSettings.ReadData();
-                return "5";
+                ItemInSettings userValueSettingFile = fileSettings.ReadData();
+                return userValueSettingFile.Temperature;
+                // return temp + if internet is working -> "25+0" or "25+1"
             }
         }
 
         public class InfluxDBCreator {
-            // variable
+
             private InfluxDBClient client;
             private List<String> databaseNames;
 
@@ -64,7 +65,13 @@ namespace Server.Controllers
                 Console.Write(databaseNames[2] + "\n");
             }
 
-            public string ReadFromDatabase() {
+            public ItemInSettings ReadFromDatabase() {
+
+                ItemInSettings userOptionsFromDatabase = new ItemInSettings();
+                userOptionsFromDatabase.Blinds = "1";
+                userOptionsFromDatabase.Light = "1";
+                userOptionsFromDatabase.Temperature = "25";
+
                 // prerobit cez nove tablku
                 /*
                 var queryResultSet = client.QueryMultiSeriesAsync(databaseNames[3], "select * from temperature").Result;
@@ -81,8 +88,7 @@ namespace Server.Controllers
                 Console.Write(setValueFromUser.ToString());
                 */
 
-                int Out = 25;
-                return Out.ToString();
+                return userOptionsFromDatabase;
             }
 
             public void WriteToDatabase(double tempFromSenzor) {
@@ -91,18 +97,21 @@ namespace Server.Controllers
                 var valMixed = new InfluxDatapoint<InfluxValueField>();
                 valMixed.UtcTimestamp = DateTime.UtcNow;
                 valMixed.Fields.Add("actual", new InfluxValueField(tempFromSenzor));
-                // posta data
+
+                // post data
                 valMixed.MeasurementName = "temperature";
                 valMixed.Precision = TimePrecision.Seconds;
 
                 var sendResponse = client.PostPointAsync(databaseNames[1], valMixed).Result;
+
+                // Check if the write to dabase was successful
                 if (sendResponse)
                 {
-                    Console.Write("Send OK");
+                    Console.Write("Send OK \n");
                 }
                 else
                 {
-                    Console.Write("Database problem");
+                    Console.Write("Database problem \n");
                 }
             }
 
@@ -117,12 +126,12 @@ namespace Server.Controllers
 
                 if (pingStatus.Status == IPStatus.Success)
                 {
-                    Console.Write("Internet connection istablished");
+                    Console.Write("Internet connection istablished \n");
                     return true;
                 }
                 else
                 {
-                    Console.Write("Internet connection not istablished");
+                    Console.Write("Internet connection not istablished \n");
                     return false;
                 }
             }
@@ -132,12 +141,13 @@ namespace Server.Controllers
 
         }
 
-        public class JsonFile {
+        public class SettingsFile {
 
             private string[] drives;
             private string pathOfSettings;
 
-            public JsonFile() {
+            // Create file with user settings
+            public SettingsFile() {
                 drives = System.IO.Directory.GetLogicalDrives();
                 Console.Write(drives[0] + "\n");
                 Directory.CreateDirectory(drives[0] + "\\Settings");
@@ -145,33 +155,42 @@ namespace Server.Controllers
             }
              
             // write data from user to JSON
-            public void WriteData(string temperature) {
+            public void WriteData(string temperature, string light, string blinds) {
 
-                // create JSON object
+                // create JSON object from user settings
                 dynamic livingRooom = new JObject();
                 livingRooom.Temperature = temperature;
+                livingRooom.Light = light;
+                livingRooom.Blinds = blinds;
 
                 // Write Json object to file
                 System.IO.File.WriteAllText(pathOfSettings, livingRooom.ToString());
 
             }
-            public void ReadData()
+            public ItemInSettings ReadData()
             {
                 ItemInSettings item;
                 using (StreamReader r = new StreamReader(pathOfSettings))
                 {
                     string json = r.ReadToEnd();
-                    item = Newtonsoft.Json.JsonConvert.DeserializeObject<ItemInSettings>(json);
+                    item = JsonConvert.DeserializeObject<ItemInSettings>(json);
                 }
-                Console.Write(item.Temperature.ToString());
+
+                Console.Write("Temperature from user: " +item.Temperature.ToString() + "\n");
+                Console.Write("Light: " + item.Light.ToString() + "\n");
+                Console.Write("Blinds:" + item.Blinds.ToString() + "\n");
+
+                return item;
             }
 
         }
 
         public class ItemInSettings
         {
-            public int Temperature;
-            // TO-DO ostatne parametere - huminidity ..
+            // Settings of Living Room
+            public string Temperature = "25";
+            public string Light = "0";
+            public string Blinds = "0";
         }
 
     }
