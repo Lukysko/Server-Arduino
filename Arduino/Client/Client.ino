@@ -120,6 +120,7 @@ void loop() {
 
  // Turn on / off server control
  buttonStateControlServer = digitalRead(buttonPinControlServer);
+ // Turn on / off server heating
  buttonStateControlHeating = digitalRead(buttonPinControlHeating);
  
  Serial.println("Button state control server ----------");
@@ -142,6 +143,7 @@ if(buttonStateControlHeating == 1){
   
   if(variableControlServer == 1){
     digitalWrite(serverControl, HIGH);
+    Serial.println("Control server ---------------------");
      if (tempFromUser > tempFromSenzor.toDouble()) {
         // turn on the heating
         Serial.println("Heating ON");
@@ -154,14 +156,19 @@ if(buttonStateControlHeating == 1){
         digitalWrite(heating, LOW);
         digitalWrite(air, HIGH);
       }
-      Serial.println("Ovladanie server ---------------------");
+
   } else if(variableControlServer == 2){
-    // ovladanie druhy button
-    digitalWrite(serverControl, LOW);
-    Serial.println("Heating ON");
-    digitalWrite(heating, HIGH);
-    digitalWrite(air, LOW);
-    Serial.println("Ovladanie manual ----------------");
+      digitalWrite(serverControl, LOW);
+      Serial.println("Control manual ----------------");
+      if(variableControlHeating == 1){
+        Serial.println("Heating ON");
+        digitalWrite(heating, HIGH);
+        digitalWrite(air, LOW);
+      } else if (variableControlHeating == 2){
+        Serial.println("Air conditioning ON");
+        digitalWrite(heating, LOW);
+        digitalWrite(air, HIGH);
+        }
     }
   
   delay(1000);

@@ -33,12 +33,9 @@ namespace Server.Controllers
                 fileSettings.WriteData(databaseValuesUser.Temperature, databaseValuesUser.Light, databaseValuesUser.Blinds);
 
                 // Write to database temp from senzor and generate values
-                // Generate data - kazda izba vlastna funkcia
                 influxDBCreator.WriteToDatabase(tempFromSenzor);
 
                 return databaseValuesUser.Temperature;
-                // return temp + if internet is working -> "25+0" or "25+1"
-
             } else {
                 ItemInSettings userValueSettingFile = fileSettings.ReadData();
                 return userValueSettingFile.Temperature;
@@ -60,49 +57,46 @@ namespace Server.Controllers
 
 
                 // testovaci vypis
-                Console.Write(databaseNames[0] + "\n");
-                Console.Write(databaseNames[1] + "\n");
-                Console.Write(databaseNames[2] + "\n");
+                Console.Write(databaseNames[4] + "\n");
+                Console.Write(databaseNames[5] + "\n");
             }
 
             public ItemInSettings ReadFromDatabase() {
 
                 ItemInSettings userOptionsFromDatabase = new ItemInSettings();
-                userOptionsFromDatabase.Blinds = "1";
-                userOptionsFromDatabase.Light = "1";
-                userOptionsFromDatabase.Temperature = "25";
-
-                // prerobit cez nove tablku
-                /*
-                var queryResultSet = client.QueryMultiSeriesAsync(databaseNames[3], "select * from temperature").Result;
+                
+                // table - UserWish 
+                var queryResultSet = client.QueryMultiSeriesAsync(databaseNames[5], "select * from LivingRoom").Result;
                 var numberOfRecordsResult = queryResultSet[0].Entries.Count;
-                var setValueFromUserResult = queryResultSet.Last()?.Entries[numberOfRecordsResult-1].Setpoint;
-                Console.Write(setValueFromUserResult);
-                valMixed.Fields.Add("setpoint", new InfluxValueField(Convert.ToDouble(setValueFromUserResult)));
-                var queryResult = client.QueryMultiSeriesAsync(databaseNames[1], "select * from temperature").Result;
-                Console.Write(queryResult);
-                var numberOfRecords = queryResult[0].Entries.Count;
-                Console.Write(numberOfRecords);
-                var setValueFromUser = queryResult.Last()?.Entries[numberOfRecords-1].Setpoint;
-                Console.Write("teeeeeeeeeeeeest");
-                Console.Write(setValueFromUser.ToString());
-                */
+
+                userOptionsFromDatabase.Temperature = queryResultSet.Last()?.Entries[numberOfRecordsResult-1].Temperature;
+                userOptionsFromDatabase.Blinds = queryResultSet.Last()?.Entries[numberOfRecordsResult - 1].Blinds;
+                userOptionsFromDatabase.Light = queryResultSet.Last()?.Entries[numberOfRecordsResult - 1].Light;
 
                 return userOptionsFromDatabase;
             }
 
             public void WriteToDatabase(double tempFromSenzor) {
 
-                // prepare writing of temperature from senzor to InfluxDB
+                // prepare writing of temperature from senzor to InfluxDB 
                 var valMixed = new InfluxDatapoint<InfluxValueField>();
                 valMixed.UtcTimestamp = DateTime.UtcNow;
-                valMixed.Fields.Add("actual", new InfluxValueField(tempFromSenzor));
+
+                // generate value for humudity
+                Random rnd = new Random();
+                double humidity = tempFromSenzor - rnd.Next(1, 13);
+
+                // what is to be writting
+                valMixed.Fields.Add("Temperature", new InfluxValueField(tempFromSenzor));
+                valMixed.Fields.Add("Humidity", new InfluxValueField(humidity));
 
                 // post data
-                valMixed.MeasurementName = "temperature";
+                valMixed.MeasurementName = "LivingRoom";
                 valMixed.Precision = TimePrecision.Seconds;
 
-                var sendResponse = client.PostPointAsync(databaseNames[1], valMixed).Result;
+                var sendResponse = client.PostPointAsync(databaseNames[4], valMixed).Result;
+
+                // DO-TO - generovanie hodnôt pre každú izbu
 
                 // Check if the write to dabase was successful
                 if (sendResponse)
@@ -114,8 +108,6 @@ namespace Server.Controllers
                     Console.Write("Database problem \n");
                 }
             }
-
-
         }
 
         public class InternetConnection {
@@ -187,7 +179,7 @@ namespace Server.Controllers
 
         public class ItemInSettings
         {
-            // Settings of Living Room
+            // Settings of Living Room from user
             public string Temperature = "25";
             public string Light = "0";
             public string Blinds = "0";
