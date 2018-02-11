@@ -4,7 +4,7 @@
 // Newer Ethernet shields have a MAC address printed on a sticker on the shield
 byte mac[] = { 0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xED };
 // use the numeric IP instead of the name for the server:
-IPAddress server(192, 168, 1, 8);
+IPAddress server(192, 168, 1, 4);
 
 String tempFromSenzor = "0";
 double tempFromUser = 0;
@@ -48,15 +48,15 @@ void disconnect() {
 
 // Pause for a 50 seconds
 void wait() {
-  Serial.println("Wait 5 seconds");
-  delay(5000);
+  Serial.println("Wait 15 seconds");
+  delay(15000);
 }
 
 // Send the HTTP GET request to the server
 bool sendRequest() {
   Serial.println("GET Value");
   //tempFromSenzor = ( 5.0 * analogRead(0) * 100.0) / 1024.0;
-  client.println("GET /api/values?tempFromSenzor=" + tempFromSenzor + " HTTP/1.1");
+  client.println("GET /api/livingrooom?tempFromSenzor=" + tempFromSenzor + " HTTP/1.1");
   client.println("Host: www.google.com");
   delay(1000);
   client.println("Connection: close");

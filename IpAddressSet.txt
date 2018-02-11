@@ -1,0 +1,5 @@
+https://social.msdn.microsoft.com/Forums/en-US/a6bc6f7f-81d4-45e9-8e1a-e0d8b3da4af8/how-to-set-ip-address-of-windows-10-iot-to-static?forum=WindowsIoT
+set-executionpolicy remotesigned
+import-module NetTCPIP
+netsh interface ip set address "Ethernet" static 192.168.1.50 255.255.255.0
+pocuva aj na 50 aj na IP ktoru mi prideli DHCP
