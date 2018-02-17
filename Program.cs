@@ -19,7 +19,6 @@ namespace Server
 
         public static IWebHost BuildWebHost(string[] args) =>
             WebHost.CreateDefaultBuilder(args)
-                // add script to change IP and run this application automatic
                 .UseUrls("http://*:90")
                 .UseStartup<Startup>()
                 .Build();

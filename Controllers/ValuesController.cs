@@ -10,6 +10,8 @@ using Newtonsoft.Json.Linq;
 using System.IO;
 using Newtonsoft.Json;
 using System.Reflection;
+using System.Net.Sockets;
+using System.Globalization;
 
 namespace Server.Controllers
 { 
@@ -35,9 +37,14 @@ namespace Server.Controllers
                 // Write to database temp from senzor and generate values
                 influxDBCreator.WriteToDatabase(tempFromSenzor);
 
+                Console.WriteLine("-----------------------------------------------------------");
+
                 return databaseValuesUser.Temperature;
             } else {
                 ItemInSettings userValueSettingFile = fileSettings.ReadData();
+
+                Console.WriteLine("-----------------------------------------------------------");
+
                 return userValueSettingFile.Temperature;
                 // return temp + if internet is working -> "25+0" or "25+1"
             }
@@ -80,7 +87,7 @@ namespace Server.Controllers
 
                 // prepare writing of temperature from senzor to InfluxDB 
                 var valMixed = new InfluxDatapoint<InfluxValueField>();
-                valMixed.UtcTimestamp = DateTime.UtcNow;
+                valMixed.UtcTimestamp = GetTimeInternet();
 
                 // generate value for humudity
                 Random rnd = new Random();
@@ -108,6 +115,25 @@ namespace Server.Controllers
                     Console.Write("Database problem \n");
                 }
             }
+
+            
+            private static DateTime GetTimeInternet() {
+                
+                var client = new TcpClient("time.nist.gov", 13);
+                DateTime localDateTime;
+
+                using (var streamReader = new StreamReader(client.GetStream()))
+                {
+                    var response = streamReader.ReadToEnd();
+                    var utcDateTimeString = response.Substring(7, 17);
+                    localDateTime = DateTime.ParseExact(utcDateTimeString, "yy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal);
+                }
+
+                Console.Write(localDateTime.ToString() + "\n");
+                DateTime finalTime = localDateTime.AddHours(9);
+                return finalTime;
+            }
+            
         }
 
         public class InternetConnection {
@@ -129,6 +155,7 @@ namespace Server.Controllers
             }
         }
 
+        // TO-DO generovanie hodnot pre ostatne izby - volanie funkcie pri zapiovani do databazy
         public class GenerateData {
 
         }
