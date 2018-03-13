@@ -62,8 +62,6 @@ namespace Server.Controllers
                 Console.Write("Connection done \n");
                 Console.Write("Database: \n");
 
-
-                // testovaci vypis
                 Console.Write(databaseNames[4] + "\n");
                 Console.Write(databaseNames[5] + "\n");
             }
@@ -103,7 +101,35 @@ namespace Server.Controllers
 
                 var sendResponse = client.PostPointAsync(databaseNames[4], valMixed).Result;
 
-                // DO-TO - generovanie hodnôt pre každú izbu
+
+                //--------------------------------------------------------
+                // KidsRoom - generate random data
+                valMixed = new InfluxDatapoint<InfluxValueField>();
+                valMixed.Fields.Add("Temperature", new InfluxValueField(tempFromSenzor + rnd.Next(1,4)));
+                valMixed.Fields.Add("Humidity", new InfluxValueField(humidity + rnd.Next(1, 4)));
+                valMixed.MeasurementName = "KidsRoom";
+                valMixed.Precision = TimePrecision.Seconds;
+
+                sendResponse = client.PostPointAsync(databaseNames[4], valMixed).Result;
+
+                // Bedroom - generate random data
+                valMixed = new InfluxDatapoint<InfluxValueField>();
+                valMixed.Fields.Add("Temperature", new InfluxValueField(tempFromSenzor + rnd.Next(1, 4)));
+                valMixed.Fields.Add("Humidity", new InfluxValueField(humidity + rnd.Next(1, 4)));
+                valMixed.MeasurementName = "Bedroom";
+                valMixed.Precision = TimePrecision.Seconds;
+
+                sendResponse = client.PostPointAsync(databaseNames[4], valMixed).Result;
+
+                // Kitchen - generate random data
+                valMixed = new InfluxDatapoint<InfluxValueField>();
+                valMixed.Fields.Add("Temperature", new InfluxValueField(tempFromSenzor + rnd.Next(1, 4)));
+                valMixed.Fields.Add("Humidity", new InfluxValueField(humidity + rnd.Next(1, 4)));
+                valMixed.MeasurementName = "Kitchen";
+                valMixed.Precision = TimePrecision.Seconds;
+
+                sendResponse = client.PostPointAsync(databaseNames[4], valMixed).Result;
+                //--------------------------------------------------------
 
                 // Check if the write to dabase was successful
                 if (sendResponse)
@@ -155,7 +181,7 @@ namespace Server.Controllers
             }
         }
 
-        // TO-DO generovanie hodnot pre ostatne izby - volanie funkcie pri zapiovani do databazy
+        // TODO generovanie hodnot pre ostatne izby - volanie funkcie pri zapiovani do databazy
         public class GenerateData {
 
         }
