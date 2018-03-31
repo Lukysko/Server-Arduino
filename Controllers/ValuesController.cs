@@ -46,7 +46,6 @@ namespace Server.Controllers
                 Console.WriteLine("-----------------------------------------------------------");
 
                 return userValueSettingFile.Temperature;
-                // return temp + if internet is working -> "25+0" or "25+1"
             }
         }
 
@@ -179,11 +178,6 @@ namespace Server.Controllers
                     return false;
                 }
             }
-        }
-
-        // TODO generovanie hodnot pre ostatne izby - volanie funkcie pri zapiovani do databazy
-        public class GenerateData {
-
         }
 
         public class SettingsFile {
