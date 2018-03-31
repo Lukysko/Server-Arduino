@@ -31,11 +31,11 @@ namespace Server.Controllers
                 InfluxDBCreator influxDBCreator = new InfluxDBCreator();
                 ItemInSettings databaseValuesUser = influxDBCreator.ReadFromDatabase();
 
-                // Write to JSON settings from user
-                fileSettings.WriteData(databaseValuesUser.Temperature, databaseValuesUser.Light, databaseValuesUser.Blinds);
-
                 // Write to database temp from senzor and generate values
                 influxDBCreator.WriteToDatabase(tempFromSenzor);
+
+                // Write to JSON settings from user
+                fileSettings.WriteData(databaseValuesUser.Temperature, databaseValuesUser.Light, databaseValuesUser.Blinds);
 
                 Console.WriteLine("-----------------------------------------------------------");
 
