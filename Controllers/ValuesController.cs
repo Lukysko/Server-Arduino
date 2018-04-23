@@ -16,10 +16,10 @@ using System.Globalization;
 namespace Server.Controllers
 { 
     [Route("api/[controller]")]
-    // Controler for living room
+    //Controler for living room
     public class LivingRooomController : Controller
     {
-        // http://localhost:90/api/livingrooom?tempFromSenzor=20 - example of get
+        //http://localhost:90/api/livingrooom?tempFromSenzor=20 - example of get
 
         [HttpGet]
         public string Get(double tempFromSenzor)
@@ -69,7 +69,6 @@ namespace Server.Controllers
 
                 ItemInSettings userOptionsFromDatabase = new ItemInSettings();
                 
-                // table - UserWish 
                 var queryResultSet = client.QueryMultiSeriesAsync(databaseNames[5], "select * from LivingRoom").Result;
                 var numberOfRecordsResult = queryResultSet[0].Entries.Count;
 
@@ -100,8 +99,6 @@ namespace Server.Controllers
 
                 var sendResponse = client.PostPointAsync(databaseNames[4], valMixed).Result;
 
-
-                //--------------------------------------------------------
                 // KidsRoom - generate random data
                 valMixed = new InfluxDatapoint<InfluxValueField>();
                 valMixed.Fields.Add("Temperature", new InfluxValueField(tempFromSenzor + rnd.Next(1,4)));
@@ -128,7 +125,6 @@ namespace Server.Controllers
                 valMixed.Precision = TimePrecision.Seconds;
 
                 sendResponse = client.PostPointAsync(databaseNames[4], valMixed).Result;
-                //--------------------------------------------------------
 
                 // Check if the write to dabase was successful
                 if (sendResponse)

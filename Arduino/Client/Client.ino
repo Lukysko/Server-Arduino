@@ -46,7 +46,6 @@ void disconnect() {
   client.stop();
 }
 
-// Pause for a 50 seconds
 void wait() {
   Serial.println("Wait 15 seconds");
   delay(15000);
@@ -55,7 +54,6 @@ void wait() {
 // Send the HTTP GET request to the server
 bool sendRequest() {
   Serial.println("GET Value");
-  //tempFromSenzor = ( 5.0 * analogRead(0) * 100.0) / 1024.0;
   client.println("GET /api/livingrooom?tempFromSenzor=" + tempFromSenzor + " HTTP/1.1");
   client.println("Host: www.google.com");
   delay(1000);
